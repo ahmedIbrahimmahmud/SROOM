@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jigawa Northwest Senatorial District - Situation Room</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🇳🇬</text></svg>">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header-bar">
+        <div class="brand-wrapper">
+            <div class="brand-badge" style="background: linear-gradient(135deg, #9333ea, #6b21a8);">ADC</div>
+            <div class="brand-titles">
+                <h1>ADC Jigawa Northwest Situation Room</h1>
+                <p>African Democratic Congress (ADC) • Senatorial Collation & Box Tracking Command</p>
+            </div>
+            <div class="live-indicator">
+                <span class="pulse-dot"></span>
+                <span>LIVE FEED</span>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab-btn active" data-tab="dashboard">
+                <span>📊 Command Center</span>
+            </button>
+            <button class="nav-tab-btn" data-tab="results">
+                <span>📋 Polling Units Database</span>
+            </button>
+            <button class="nav-tab-btn" data-tab="admin-results">
+                <span>🔐 Record PU Result (Admin)</span>
+            </button>
+            <button class="nav-tab-btn" data-tab="admin-agents">
+                <span>👥 ADC Agents (Admin)</span>
+            </button>
+            <button class="nav-tab-btn" data-tab="incidents">
+                <span>🚨 Incident Triage</span>
+            </button>
+        </nav>
+
+        <!-- Admin Quick Status / Login Button -->
+        <div id="headerAdminStatus" class="admin-auth-badge">
+            <span id="adminStatusText" class="admin-lock-badge locked">🔒 Admin Restricted</span>
+            <button id="adminLoginBtn" class="btn-primary" style="padding:0.4rem 0.9rem; font-size:0.8rem;" onclick="openModal('adminLoginModal')">Admin Login</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-wrapper">
+        
+        <!-- Live Ticker Bar -->
+        <section class="ticker-container" id="broadcastTicker">
+            <span class="ticker-label">🔔 SITUATION ROOM FLASH:</span>
+            <span class="ticker-text" id="tickerText">Connecting to Jigawa Northwest senatorial field network...</span>
+        </section>
+
+        <!-- VIEW 1: COMMAND CENTER (DASHBOARD) -->
+        <div class="view-panel" id="view-dashboard">
+            <!-- District KPI Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Reported Polling Units <span>📦</span></div>
+                    <div class="kpi-value" id="kpiReportedPus">0</div>
+                    <div class="kpi-sub">Across 12 LGAs of Jigawa Northwest</div>
+                </div>
+                <div class="kpi-card gold-border">
+                    <div class="kpi-title">Accredited Voters (BVAS) <span>👥</span></div>
+                    <div class="kpi-value" id="kpiAccredited">0</div>
+                    <div class="kpi-sub">Biometrically verified turnout</div>
+                </div>
+                <div class="kpi-card success-border">
+                    <div class="kpi-title">Total Valid Votes <span>✔️</span></div>
+                    <div class="kpi-value" id="kpiValidVotes">0</div>
+                    <div class="kpi-sub">Form EC8A certified valid ballots</div>
+                </div>
+                <div class="kpi-card danger-border">
+                    <div class="kpi-title">Audit Flagged Units <span>⚠️</span></div>
+                    <div class="kpi-value" id="kpiFlaggedPus">0</div>
+                    <div class="kpi-sub">Over-voting / ballot reconciliation flags</div>
+                </div>
+            </div>
+
+            <!-- Party Standings Leaderboard -->
+            <section class="standings-section">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Senatorial Contest Standings</h2>
+                        <p class="section-desc">Cumulative vote tallies from transmitted electoral box forms</p>
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">
+                        Last Synced: <span id="lastUpdatedTime" style="color:#fff; font-weight:600;">--:--:--</span>
+                    </div>
+                </div>
+                <div class="leader-grid" id="leaderboardContainer">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Dashboard Split Layout: LGA Summary & Live Stream -->
+            <div class="dashboard-grid">
+                <!-- LGA Aggregate Breakdown -->
+                <div class="card-container">
+                    <div class="section-head">
+                        <div>
+                            <h2 class="section-title">LGA Collation Breakdown</h2>
+                            <p class="section-desc">Aggregated returns across Jigawa Northwest LGAs</p>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Local Govt Area</th>
+                                    <th>Boxes Reported</th>
+                                    <th>Accredited</th>
+                                    <th>Valid Votes</th>
+                                    <th>ADC</th>
+                                    <th>APC</th>
+                                    <th>PDP</th>
+                                    <th>NNPP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lgaSummaryTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Result Arrivals Stream -->
+                <div class="card-container">
+                    <div class="section-head">
+                        <h2 class="section-title">Incoming Box Feeds</h2>
+                    </div>
+                    <div id="latestFeedList" style="max-height: 440px; overflow-y: auto;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: POLLING UNITS DATABASE TAB -->
+        <div class="view-panel" id="view-results" style="display: none;">
+            <div class="card-container">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Electoral Polling Unit Returns</h2>
+                        <p class="section-desc">Search, filter, and audit verified and flagged results from Jigawa Northwest</p>
+                    </div>
+                    <div>
+                        <a href="/api/export/csv" class="btn-secondary" style="text-decoration:none; display:inline-block;">📥 Export CSV Report</a>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-bar">
+                    <div style="flex:1; min-width:180px;">
+                        <select id="filterLga" class="form-control lga-select">
+                            <option value="">All LGAs</option>
+                        </select>
+                    </div>
+                    <div style="flex:1; min-width:150px;">
+                        <select id="filterStatus" class="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="VERIFIED">VERIFIED Only</option>
+                            <option value="FLAGGED">FLAGGED (Irregularities)</option>
+                        </select>
+                    </div>
+                    <div style="flex:2; min-width:240px;">
+                        <input type="text" id="filterSearch" class="form-control" placeholder="Search PU Code, PU Name, Ward or Agent...">
+                    </div>
+                    <button class="btn-primary" onclick="fetchResultsTable()">Refresh</button>
+                </div>
+
+                <!-- Table -->
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>PU Code</th>
+                                <th>Polling Unit Location</th>
+                                <th>Accredited</th>
+                                <th>Valid Votes</th>
+                                <th>ADC</th>
+                                <th>APC</th>
+                                <th>PDP</th>
+                                <th>NNPP</th>
+                                <th>Reporting ADC Agent</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: ADMIN-ONLY RESULT ENTRY (Form EC8A) -->
+        <div class="view-panel" id="view-admin-results" style="display: none;">
+            
+            <!-- When NOT logged in as admin -->
+            <div id="resultsAdminLocked" class="agent-form-card" style="max-width:550px; text-align:center; padding:3rem 2rem;">
+                <div style="font-size:3rem; margin-bottom:1rem;">🛡️</div>
+                <h2 class="section-title" style="margin-bottom:0.5rem;">Admin Authentication Required</h2>
+                <p class="section-desc" style="margin-bottom:1.5rem;">Only authorized Situation Room Admins and Returning Officers are permitted to enter, verify, and commit polling unit results.</p>
+                <button class="btn-primary" onclick="openModal('adminLoginModal')">Login as Situation Room Admin</button>
+            </div>
+
+            <!-- When logged in as admin -->
+            <div id="resultsAdminFormWrapper" class="agent-form-card" style="display: none;">
+                <div class="admin-banner">
+                    <div>
+                        <span style="font-weight:700; color:#fff;">Logged in as Admin: <span id="adminBannerUser">admin</span></span>
+                        <div style="font-size:0.75rem; color:#38bdf8;">Authorized to record authentic Form EC8A results from party agents</div>
+                    </div>
+                    <button class="btn-secondary" style="font-size:0.75rem;" onclick="adminLogout()">Admin Logout</button>
+                </div>
+
+                <div class="form-header">
+                    <h2 class="section-title">Electoral Box Result Submission (Form EC8A / EC2)</h2>
+                    <p class="section-desc">Recorded by accredited <strong>ADC Party Agents</strong> covering all contesting political parties from the official PU result sheet.</p>
+                </div>
+
+                <div id="submissionAlert"></div>
+
+                <form id="resultSubmissionForm">
+                    <!-- Polling Unit & Agent Lookup -->
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Select Reporting ADC Party Agent (Auto-populates PU & Details)</label>
+                            <select id="entryAgentSelect" class="form-control" onchange="onAdminSelectAgent()">
+                                <option value="">-- Choose Accredited ADC Agent --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Reporting ADC Agent Name</label>
+                            <input type="text" id="entryAgentName" class="form-control" placeholder="ADC Agent Full Name" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Local Government Area (LGA)</label>
+                            <select id="entryLga" class="form-control lga-select" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ward (Registration Area)</label>
+                            <select id="entryWard" class="form-control" required>
+                                <option value="">-- Select Ward --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Polling Unit (PU) Code</label>
+                            <input type="text" id="entryPuCode" class="form-control" placeholder="e.g. BBR-01-002" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Polling Unit Location / Name</label>
+                            <input type="text" id="entryPuName" class="form-control" placeholder="e.g. Primary School Gazawa" required>
+                        </div>
+                    </div>
+
+                    <!-- Hidden fields for agent phone & party (Always ADC) -->
+                    <input type="hidden" id="entryAgentPhone" value="08000000000">
+                    <input type="hidden" id="entryAgentParty" value="ADC">
+
+                    <!-- Ballot & Voter Accreditation Audit -->
+                    <div style="margin: 1.5rem 0 0.5rem 0;">
+                        <h3 style="font-size:0.95rem; color:#fff; font-weight:700;">1. Ballot Box & Accreditation Reconciliation</h3>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">Anti-rigging audit: Total votes cast cannot exceed accredited voters.</p>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label>Registered Voters</label>
+                            <input type="number" id="entryRegVoters" class="form-control" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Accredited Voters (BVAS)</label>
+                            <input type="number" id="entryAccredited" class="form-control" min="0" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Ballot Papers Issued</label>
+                            <input type="number" id="entryIssued" class="form-control" min="0" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label>Unused Ballots</label>
+                            <input type="number" id="entryUnused" class="form-control" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Spoiled Ballots</label>
+                            <input type="number" id="entrySpoiled" class="form-control" min="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Rejected Ballots</label>
+                            <input type="number" id="entryRejected" class="form-control" min="0" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- Party Vote Scores -->
+                    <div style="margin: 1.5rem 0 0.5rem 0;">
+                        <h3 style="font-size:0.95rem; color:#fff; font-weight:700;">2. Candidate & Party Votes Recorded (Form EC8A / EC2)</h3>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">Enter the votes recorded for all political parties from the official result sheet brought by the ADC agent.</p>
+                    </div>
+
+                    <div class="party-vote-input-box">
+                        <div class="party-inputs-grid">
+                            <div class="party-input-pill" style="border-left-color: #9333ea; background: rgba(147, 51, 234, 0.1);">
+                                <label style="font-size:0.8rem; font-weight:700; color:#c084fc;">ADC (Our Party)</label>
+                                <input type="number" id="voteAdc" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                            <div class="party-input-pill" style="border-left-color: #0284c7;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#38bdf8;">APC</label>
+                                <input type="number" id="voteApc" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                            <div class="party-input-pill" style="border-left-color: #16a34a;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#4ade80;">PDP</label>
+                                <input type="number" id="votePdp" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                            <div class="party-input-pill" style="border-left-color: #dc2626;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#f87171;">NNPP</label>
+                                <input type="number" id="voteNnpp" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                            <div class="party-input-pill" style="border-left-color: #ea580c;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#fb923c;">LP</label>
+                                <input type="number" id="voteLp" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                            <div class="party-input-pill" style="border-left-color: #e11d48;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#fb7185;">PRP</label>
+                                <input type="number" id="votePrp" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                            <div class="party-input-pill" style="border-left-color: #64748b;">
+                                <label style="font-size:0.8rem; font-weight:700; color:#cbd5e1;">OTHERS</label>
+                                <input type="number" id="voteOther" class="form-control" style="margin-top:4px;" min="0" value="0">
+                            </div>
+                        </div>
+
+                        <!-- Live Calculation Summary -->
+                        <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px dashed var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">Computed Valid Votes: </span>
+                                <strong id="calcValidVotes" style="font-size:1.1rem; color:#10b981;">0</strong>
+                                <span style="margin: 0 1rem; color:var(--border-color);">|</span>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">Total Votes Cast: </span>
+                                <strong id="calcTotalVotes" style="font-size:1.1rem; color:#fff;">0</strong>
+                            </div>
+                            <div id="calcWarning" style="color:#ef4444; font-size:0.8rem; font-weight:700; display:none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Evidence & Remarks -->
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>EC8A Form Snapshot (Optional Image)</label>
+                            <input type="file" id="entryEc8aPhoto" accept="image/*" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Situation Room Admin Remarks</label>
+                            <input type="text" id="entryIncidents" class="form-control" placeholder="E.g. Certified by Party Agent and signed by Presiding Officer.">
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.5rem; display:flex; justify-content:flex-end; gap:1rem;">
+                        <button type="reset" class="btn-secondary">Clear Form</button>
+                        <button type="submit" class="btn-primary" style="padding:0.9rem 2.5rem; font-size:1rem;">
+                            <span>💾 Commit & Register Result to Situation Room</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- VIEW 4: ADMIN-ONLY PARTY AGENT MANAGEMENT -->
+        <div class="view-panel" id="view-admin-agents" style="display: none;">
+            <!-- Locked message if not admin -->
+            <div id="agentsAdminLocked" class="agent-form-card" style="max-width:550px; text-align:center; padding:3rem 2rem;">
+                <div style="font-size:3rem; margin-bottom:1rem;">🛡️</div>
+                <h2 class="section-title" style="margin-bottom:0.5rem;">Admin Access Required</h2>
+                <p class="section-desc" style="margin-bottom:1.5rem;">Only authorized Situation Room Admins can accredit and manage ADC party agents deployed across Jigawa Northwest polling units.</p>
+                <button class="btn-primary" onclick="openModal('adminLoginModal')">Login as Situation Room Admin</button>
+            </div>
+
+            <!-- Admin Agents Dashboard -->
+            <div id="agentsAdminContent" class="card-container" style="display: none;">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">ADC Party Agents Directory & Accreditation</h2>
+                        <p class="section-desc">Accredited ADC agents deployed to polling units to collect and transmit official Form EC8A/EC2 multi-party results</p>
+                    </div>
+                    <button class="btn-primary" onclick="openModal('registerAgentModal')">➕ Accredit New ADC Agent</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Agent Full Name</th>
+                                <th>Assigned Party</th>
+                                <th>Phone Number</th>
+                                <th>LGA Assigned</th>
+                                <th>Ward</th>
+                                <th>PU Code</th>
+                                <th>Polling Unit Location</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminAgentsTableBody">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 5: INCIDENT & DISTRESS TRIAGE -->
+        <div class="view-panel" id="view-incidents" style="display: none;">
+            <div class="card-container">
+                <div class="section-head">
+                    <div>
+                        <h2 class="section-title">Field Security & Incident Triage</h2>
+                        <p class="section-desc">Live escalation log from ADC polling unit agents across the senatorial district</p>
+                    </div>
+                    <button class="btn-danger" onclick="openModal('incidentModal')">🚨 Log Urgent Distress Call</button>
+                </div>
+                <div id="incidentCardsList">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: ADMIN LOGIN -->
+    <div class="modal-backdrop" id="adminLoginModal">
+        <div class="modal-content" style="max-width:440px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="color:#fff; font-size:1.2rem;">Situation Room Admin Login</h3>
+                <button onclick="closeModal('adminLoginModal')" style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="adminLoginAlert"></div>
+            <form id="adminLoginForm">
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label>Admin Username</label>
+                    <input type="text" id="adminUsername" class="form-control" placeholder="admin" required>
+                </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Admin Password</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:1rem;">
+                    Default credential: <code>admin</code> / <code>admin123</code>
+                </div>
+                <div style="text-align:right;">
+                    <button type="submit" class="btn-primary" style="width:100%;">Authenticate Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REGISTER NEW AGENT (ADMIN ONLY) -->
+    <div class="modal-backdrop" id="registerAgentModal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="color:#fff; font-size:1.2rem;">Accredit New ADC Party Agent</h3>
+                <button onclick="closeModal('registerAgentModal')" style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="regAlert"></div>
+            <form id="registerAgentForm">
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Agent Full Name</label>
+                        <input type="text" id="regName" class="form-control" placeholder="e.g. Bello Haruna" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="regPhone" class="form-control" placeholder="e.g. 08034567890" required>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Political Party (Mandatory ADC Agent)</label>
+                        <select id="regParty" class="form-control" required>
+                            <option value="ADC" selected>ADC (African Democratic Congress)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned Secret PIN</label>
+                        <input type="password" id="regPin" class="form-control" maxlength="6" value="1234" required>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Assigned LGA</label>
+                        <select id="regLga" class="form-control lga-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned Ward</label>
+                        <select id="regWard" class="form-control" required>
+                            <option value="">-- Select Ward --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Polling Unit Code</label>
+                        <input type="text" id="regPuCode" class="form-control" placeholder="e.g. KZR-02-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Polling Unit Name / Location</label>
+                        <input type="text" id="regPuName" class="form-control" placeholder="e.g. Kazaure Model Pri Sch" required>
+                    </div>
+                </div>
+                <div style="margin-top:1.5rem; text-align:right;">
+                    <button type="submit" class="btn-primary">Accredit & Save ADC Agent</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REPORT INCIDENT -->
+    <div class="modal-backdrop" id="incidentModal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="color:#fff; font-size:1.2rem;">Transmit Distress / Security Alert</h3>
+                <button onclick="closeModal('incidentModal')" style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <form onsubmit="submitIncidentForm(event)">
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>LGA</label>
+                        <select id="incLga" class="form-control lga-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ward Name</label>
+                        <input type="text" id="incWard" class="form-control" placeholder="e.g. Baikary" required>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Polling Unit Code</label>
+                        <input type="text" id="incPuCode" class="form-control" placeholder="e.g. GML-01-002" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Incident Severity</label>
+                        <select id="incSeverity" class="form-control" required>
+                            <option value="MEDIUM">Medium Concern</option>
+                            <option value="HIGH">High Severity</option>
+                            <option value="CRITICAL">Critical / Immediate Response</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>Reporting Agent Name</label>
+                        <input type="text" id="incAgentName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="text" id="incAgentPhone" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label>Incident Category</label>
+                    <select id="incType" class="form-control" required>
+                        <option value="BVAS_FAILURE">BVAS Machine Malfunction</option>
+                        <option value="BALLOT_SNATCHING">Ballot Box Snatching</option>
+                        <option value="VIOLENCE">Voter Intimidation / Violence</option>
+                        <option value="LATE_ARRIVAL">Late Arrival of INEC Officials</option>
+                        <option value="VOTE_BUYING">Vote Buying / Inducement</option>
+                        <option value="OTHER">Other Disruption</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Detailed Situation Description</label>
+                    <textarea id="incDesc" class="form-control" rows="3" placeholder="Describe the ongoing situation..." required></textarea>
+                </div>
+                <div style="text-align:right;">
+                    <button type="submit" class="btn-danger" style="padding:0.75rem 1.5rem;">Transmit Distress Alert</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RESULT DETAIL -->
+    <div class="modal-backdrop" id="detailModal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="color:#fff;">Form EC8A / EC2 Polling Unit Result Sheet</h3>
+                <button onclick="closeModal('detailModal')" style="background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="detailModalBody"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
